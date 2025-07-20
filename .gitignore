@@ -1,0 +1,6 @@
+impressao3d.db
+anexos_orcamento/
+config.json
+*.pyc
+__pycache__/
+.venv/
