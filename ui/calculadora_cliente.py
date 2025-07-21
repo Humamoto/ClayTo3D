@@ -13,9 +13,12 @@ if _os.path.exists(filamentos_publicos_path):
     filamentos_publicos = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(filamentos_publicos)
     def listar_filamentos():
-        return filamentos_publicos.FILAMENTOS_PUBLICOS
+        return getattr(filamentos_publicos, "FILAMENTOS_PUBLICOS", [])
 else:
     from models.filamento import listar_filamentos
+
+def listar_filamentos():
+      return FILAMENTOS_PUBLICOS
 
 def pagina_calculadora_cliente():
     st.title("Simule seu Orçamento 3D")
