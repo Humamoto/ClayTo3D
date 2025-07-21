@@ -7,8 +7,33 @@ import datetime
 import os as _os
 import socket
 
-# Controle de ambiente: modo público ou admin
-IS_PUBLIC = "streamlit" in socket.gethostname().lower() or "cloud" in socket.gethostname().lower()
+# Google Sheets integração
+try:
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+except ImportError:
+    gspread = None
+    ServiceAccountCredentials = None
+
+def enviar_pedido_google_sheets(dados):
+    cred_path = "clayto3d-3063b97a968d.json"
+    nome_planilha = "Pedidos_ClayTo3D"
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open(nome_planilha).sheet1
+    sheet.append_row(dados)
+
+# Detecta ambiente público automaticamente
+def is_public_env():
+    host = socket.gethostname().lower()
+    if "streamlit" in host or "cloud" in host:
+        return True
+    if os.environ.get("CLAYTO3D_PUBLIC", "0") == "1":
+        return True
+    return False
+
+IS_PUBLIC = is_public_env()
 
 # Função para decidir se usa lista fixa ou banco
 def listar_filamentos():
@@ -115,7 +140,29 @@ def pagina_calculadora_cliente():
         st.success(f"Valor estimado: R$ {preco_venda:.2f}")
         st.caption("Este valor é uma estimativa. O valor final pode variar após análise do projeto.")
         if st.button("Solicitar orçamento") and (not IS_PUBLIC and not st.session_state.orcamento_registrado or IS_PUBLIC):
-            if not IS_PUBLIC:
+            if IS_PUBLIC:
+                # Salva no Google Sheets
+                dados = [
+                    st.session_state.orcamento['nome_cliente'],
+                    st.session_state.orcamento['telefone_cliente'],
+                    st.session_state.orcamento['nome_peca'],
+                    st.session_state.orcamento['tempo_impressao'],
+                    "; ".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']]),
+                    f"R$ {st.session_state.orcamento['preco_venda']:.2f}",
+                    str(datetime.date.today()),
+                    # Arquivo STL
+                    next((a for a in st.session_state.orcamento['anexos'] if a.startswith('STL:')), ''),
+                    # Imagens
+                    "; ".join([a for a in st.session_state.orcamento['anexos'] if a.startswith('Imagem:')]),
+                    # Link extra
+                    next((a.replace('Link: ', '') for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), '')
+                ]
+                try:
+                    enviar_pedido_google_sheets(dados)
+                    st.success("Orçamento enviado para a ClayTo3D! Você pode acompanhar pelo WhatsApp.")
+                except Exception as e:
+                    st.error(f"Erro ao salvar no Google Sheets: {e}")
+            else:
                 # Registrar orçamento no sistema (admin/local)
                 id_cliente = None
                 filamentos_utilizados = [
