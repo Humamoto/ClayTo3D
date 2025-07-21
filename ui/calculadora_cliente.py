@@ -16,10 +16,10 @@ except ImportError:
     ServiceAccountCredentials = None
 
 def enviar_pedido_google_sheets(dados):
-    cred_path = "clayto3d-3063b97a968d.json"
     nome_planilha = "Pedidos_ClayTo3D"
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     sheet = client.open(nome_planilha).sheet1
     sheet.append_row(dados)
