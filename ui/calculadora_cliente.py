@@ -1,9 +1,12 @@
 import streamlit as st
-from models.filamento import listar_filamentos
+from ui.filamentos_publicos import FILAMENTOS_PUBLICOS
 from models.pedido_venda import adicionar_pedido_venda
 import urllib.parse
 import datetime
 import os
+
+def listar_filamentos():
+      return FILAMENTOS_PUBLICOS
 
 def pagina_calculadora_cliente():
     st.title("Simule seu Orçamento 3D")
