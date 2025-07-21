@@ -19,6 +19,12 @@ def enviar_pedido_google_sheets(dados):
     nome_planilha = "Pedidos_ClayTo3D"
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds_dict = dict(st.secrets["gcp_service_account"])
+
+    # **MUDANÇA CRÍTICA AQUI:**
+    # Garante que a private_key tenha as quebras de linha corretas para o gspread/oauth2client.
+    # Mesmo com aspas triplas no TOML, às vezes é necessário garantir que '\n' seja interpretado literalmente.
+    creds_dict['private_key'] = creds_dict['private_key'].replace("\\n", "\n")
+
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     sheet = client.open(nome_planilha).sheet1
@@ -33,7 +39,7 @@ def is_public_env():
         return True
     return False
 
-IS_PUBLIC = True
+IS_PUBLIC = True # Mantido como estava no seu código
 
 # Função para decidir se usa lista fixa ou banco
 def listar_filamentos():
@@ -205,4 +211,4 @@ def pagina_calculadora_cliente():
                 st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
 
     if st.session_state.whatsapp_link:
-        st.markdown(f"[Solicitar orçamento via WhatsApp]({st.session_state.whatsapp_link})", unsafe_allow_html=True) 
+        st.markdown(f"[Solicitar orçamento via WhatsApp]({st.session_state.whatsapp_link})", unsafe_allow_html=True)
