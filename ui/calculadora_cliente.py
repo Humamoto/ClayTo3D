@@ -33,7 +33,7 @@ def is_public_env():
         return True
     return False
 
-IS_PUBLIC = is_public_env()
+IS_PUBLIC = True
 
 # Função para decidir se usa lista fixa ou banco
 def listar_filamentos():
