@@ -5,9 +5,10 @@ from models.pedido_venda import adicionar_pedido_venda
 import urllib.parse
 import datetime
 import os as _os
+import socket
 
 # Controle de ambiente: modo público ou admin
-IS_PUBLIC = os.environ.get("CLAYTO3D_PUBLIC", "0") == "1"
+IS_PUBLIC = "streamlit" in socket.gethostname().lower() or "cloud" in socket.gethostname().lower()
 
 # Função para decidir se usa lista fixa ou banco
 def listar_filamentos():
