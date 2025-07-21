@@ -7,18 +7,16 @@ import datetime
 import os as _os
 
 # Função para decidir se usa lista fixa ou banco
-filamentos_publicos_path = _os.path.join(_os.path.dirname(__file__), "filamentos_publicos.py")
-if _os.path.exists(filamentos_publicos_path):
-    spec = importlib.util.spec_from_file_location("filamentos_publicos", filamentos_publicos_path)
-    filamentos_publicos = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(filamentos_publicos)
-    def listar_filamentos():
-        return getattr(filamentos_publicos, "FILAMENTOS_PUBLICOS", [])
-else:
-    from models.filamento import listar_filamentos
-
 def listar_filamentos():
-      return FILAMENTOS_PUBLICOS
+    filamentos_publicos_path = _os.path.join(_os.path.dirname(__file__), "filamentos_publicos.py")
+    if _os.path.exists(filamentos_publicos_path):
+        spec = importlib.util.spec_from_file_location("filamentos_publicos", filamentos_publicos_path)
+        filamentos_publicos = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(filamentos_publicos)
+        return getattr(filamentos_publicos, "FILAMENTOS_PUBLICOS", [])
+    else:
+        from models.filamento import listar_filamentos as lf
+        return lf()
 
 def pagina_calculadora_cliente():
     st.title("Simule seu Orçamento 3D")
