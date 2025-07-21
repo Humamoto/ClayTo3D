@@ -6,6 +6,9 @@ import urllib.parse
 import datetime
 import os as _os
 
+# Controle de ambiente: modo público ou admin
+IS_PUBLIC = os.environ.get("CLAYTO3D_PUBLIC", "0") == "1"
+
 # Função para decidir se usa lista fixa ou banco
 def listar_filamentos():
     filamentos_publicos_path = _os.path.join(_os.path.dirname(__file__), "filamentos_publicos.py")
@@ -110,37 +113,38 @@ def pagina_calculadora_cliente():
         preco_venda = st.session_state.orcamento['preco_venda']
         st.success(f"Valor estimado: R$ {preco_venda:.2f}")
         st.caption("Este valor é uma estimativa. O valor final pode variar após análise do projeto.")
-        if st.button("Solicitar orçamento") and not st.session_state.orcamento_registrado:
-            # Registrar orçamento no sistema
-            id_cliente = None
-            filamentos_utilizados = [
-                {
-                    'id_filamento': fil['id_filamento'],
-                    'quantidade_g_utilizada': fil['quantidade_g_utilizada'],
-                    'preco_kg': fil['preco_kg']
-                } for fil in st.session_state.orcamento['filamentos_utilizados']
-            ]
-            try:
-                observacao = f"Nome: {st.session_state.orcamento['nome_cliente']} | WhatsApp: {st.session_state.orcamento['telefone_cliente']}"
-                if st.session_state.orcamento['anexos']:
-                    observacao += " | Anexos: " + "; ".join(st.session_state.orcamento['anexos'])
-                adicionar_pedido_venda(
-                    id_cliente=id_cliente,
-                    nome_peca=st.session_state.orcamento['nome_peca'] or '-',
-                    tempo_impressao_horas=st.session_state.orcamento['tempo_impressao'],
-                    custo_impressao_hora=st.session_state.orcamento['custo_hora'],
-                    filamentos_utilizados=filamentos_utilizados,
-                    preco_arquivo=0.0,
-                    margem_lucro_percentual=st.session_state.orcamento['margem'],
-                    data_venda=str(datetime.date.today()),
-                    status="Orçamento Solicitado",
-                    observacao=observacao
-                )
-                st.session_state.orcamento_registrado = True
-                st.success("Orçamento registrado! Você pode acompanhar pelo admin.")
-            except Exception as e:
-                st.error(f"Erro ao registrar orçamento: {e}")
-            # WhatsApp
+        if st.button("Solicitar orçamento") and (not IS_PUBLIC and not st.session_state.orcamento_registrado or IS_PUBLIC):
+            if not IS_PUBLIC:
+                # Registrar orçamento no sistema (admin/local)
+                id_cliente = None
+                filamentos_utilizados = [
+                    {
+                        'id_filamento': fil['id_filamento'],
+                        'quantidade_g_utilizada': fil['quantidade_g_utilizada'],
+                        'preco_kg': fil['preco_kg']
+                    } for fil in st.session_state.orcamento['filamentos_utilizados']
+                ]
+                try:
+                    observacao = f"Nome: {st.session_state.orcamento['nome_cliente']} | WhatsApp: {st.session_state.orcamento['telefone_cliente']}"
+                    if st.session_state.orcamento['anexos']:
+                        observacao += " | Anexos: " + "; ".join(st.session_state.orcamento['anexos'])
+                    adicionar_pedido_venda(
+                        id_cliente=id_cliente,
+                        nome_peca=st.session_state.orcamento['nome_peca'] or '-',
+                        tempo_impressao_horas=st.session_state.orcamento['tempo_impressao'],
+                        custo_impressao_hora=st.session_state.orcamento['custo_hora'],
+                        filamentos_utilizados=filamentos_utilizados,
+                        preco_arquivo=0.0,
+                        margem_lucro_percentual=st.session_state.orcamento['margem'],
+                        data_venda=str(datetime.date.today()),
+                        status="Orçamento Solicitado",
+                        observacao=observacao
+                    )
+                    st.session_state.orcamento_registrado = True
+                    st.success("Orçamento registrado! Você pode acompanhar pelo admin.")
+                except Exception as e:
+                    st.error(f"Erro ao registrar orçamento: {e}")
+            # WhatsApp (sempre disponível)
             numero_whatsapp = "5541997730248"
             mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
             for fil in st.session_state.orcamento['filamentos_utilizados']:
