@@ -20,15 +20,19 @@ def enviar_pedido_google_sheets(dados):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds_dict = dict(st.secrets["gcp_service_account"])
 
-    # **MUDANÇA CRÍTICA AQUI:**
-    # Garante que a private_key tenha as quebras de linha corretas para o gspread/oauth2client.
-    # Mesmo com aspas triplas no TOML, às vezes é necessário garantir que '\n' seja interpretado literalmente.
-    creds_dict['private_key'] = creds_dict['private_key'].replace("\\n", "\n")
+    try:
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+            client = gspread.authorize(creds)
+            sheet = client.open(nome_planilha).sheet1
+            sheet.append_row(dados)
+    except Exception as e:
+        st.error(f"Erro ao salvar no Google Sheets: {e}")
+        # Mantenha os prints de debug temporariamente para ver o conteúdo
+        st.write("DEBUG - creds_dict['private_key'] recebido:")
+        st.code(creds_dict['private_key'])
+        st.write(f"DEBUG - Length: {len(creds_dict['private_key'])}")
+        st.write(f"DEBUG - Newline count (literal \n): {creds_dict['private_key'].count('\n')}")
 
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-    sheet = client.open(nome_planilha).sheet1
-    sheet.append_row(dados)
 
 # Detecta ambiente público automaticamente
 def is_public_env():
@@ -198,17 +202,17 @@ def pagina_calculadora_cliente():
                         st.success("Orçamento registrado! Você pode acompanhar pelo admin.")
                     except Exception as e:
                         st.error(f"Erro ao registrar orçamento: {e}")
-                # WhatsApp (sempre disponível)
-                numero_whatsapp = "5541997730248"
-                mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
-                for fil in st.session_state.orcamento['filamentos_utilizados']:
-                    mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
-                mensagem += f"Valor estimado: R$ {st.session_state.orcamento['preco_venda']:.2f}"
-                if st.session_state.orcamento['anexos']:
-                    mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
-                mensagem += "\n\nAguardo retorno!"
-                mensagem_url = urllib.parse.quote(mensagem)
-                st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
+            # Gera o link do WhatsApp (sempre)
+            numero_whatsapp = "5541997730248"
+            mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
+            for fil in st.session_state.orcamento['filamentos_utilizados']:
+                mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
+            mensagem += f"Valor estimado: R$ {st.session_state.orcamento['preco_venda']:.2f}"
+            if st.session_state.orcamento['anexos']:
+                mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
+            mensagem += "\n\nAguardo retorno!"
+            mensagem_url = urllib.parse.quote(mensagem)
+            st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
 
     if st.session_state.whatsapp_link:
         st.markdown(f"[Solicitar orçamento via WhatsApp]({st.session_state.whatsapp_link})", unsafe_allow_html=True)
