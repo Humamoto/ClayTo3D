@@ -150,8 +150,6 @@ def pagina_calculadora_cliente():
             st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
         elif not st.session_state.filamentos_lista:
             st.warning("Adicione pelo menos um filamento para calcular o orçamento.")
-        elif not link_extra:
-            st.warning("Por favor, cole o link dos arquivos STL/imagens para análise do orçamento.")
         else:
             custo_hora = 10.0
             margem = 1.5
@@ -159,7 +157,9 @@ def pagina_calculadora_cliente():
             preco_custo = custo_hora * tempo_impressao + preco_custo_filamentos
             preco_venda = preco_custo * margem
 
-            anexos_info = [f"Link: {link_extra}"]
+            anexos_info = []
+            if link_extra:
+                anexos_info.append(f"Link: {link_extra}")
 
             st.session_state.orcamento = {
                 'nome_cliente': nome_cliente,
@@ -283,7 +283,7 @@ def pagina_calculadora_cliente():
             st.session_state.orcamento.get('nome_peca') != nome_peca or
             st.session_state.orcamento.get('tempo_impressao') != tempo_impressao or
             st.session_state.orcamento.get('filamentos_utilizados') != st.session_state.filamentos_lista or
-            st.session_state.orcamento.get('anexos') != [f"Link: {link_extra}"] # Adicionado para verificar o link
+            st.session_state.orcamento.get('anexos') != anexos_info # Adicionado para verificar o link
         )
     ):
         st.session_state.orcamento = None
