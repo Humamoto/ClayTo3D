@@ -269,12 +269,29 @@ def pagina_calculadora_cliente():
 
             if st.session_state.orcamento_enviado and st.session_state.whatsapp_link:
                 st.markdown(f'''
-                    <a href="{st.session_state.whatsapp_link}" target="_blank" style="display:block; text-align:center; margin: 1.5rem 0;">
-                        <button style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Enviar pelo WhatsApp
-                        </button>
-                    </a>
-                ''', unsafe_allow_html=True)
+    <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <a href="{st.session_state.whatsapp_link}" target="_blank" style="text-decoration: none;">
+            <button style="
+                background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 1rem 2.5rem;
+                font-size: 1.3rem;
+                font-weight: bold;
+                box-shadow: 0 0 16px #ff4ecd88;
+                cursor:pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.7rem;
+                width: fit-content;
+                ">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Enviar pelo WhatsApp
+            </button>
+        </a>
+    </div>
+''', unsafe_allow_html=True)
 
     # Limpa orçamento se qualquer campo relevante mudar
     if (
