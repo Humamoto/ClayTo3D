@@ -170,9 +170,9 @@ def pagina_calculadora_cliente():
         <table style='width:100%; font-size:1.1rem; color:#fff;'>
             <tr><td><b>Nome:</b></td><td>{st.session_state.orcamento['nome_cliente']}</td></tr>
             <tr><td><b>WhatsApp:</b></td><td>{st.session_state.orcamento['telefone_cliente']}</td></tr>
-            <tr><td><b>Peça:</b></td><td>{st.session_state.orcamento['nome_peca'] or '-'}</td></tr>
-            <tr><td><b>Tempo de Impressão:</b></td><td>{st.session_state.orcamento['tempo_impressao']} horas</td></tr>
-            <tr><td><b>Peso Total:</b></td><td>{st.session_state.orcamento['peso_total']}g</td></tr>
+            <tr><td><b>Peça:</b></td><td>{st.session_state.orcamento.get('nome_peca', '-')}</td></tr>
+            <tr><td><b>Tempo de Impressão:</b></td><td>{st.session_state.orcamento.get('tempo_impressao', '-')} horas</td></tr>
+            <tr><td><b>Peso Total:</b></td><td>{st.session_state.orcamento.get('peso_total', '-')}g</td></tr>
             <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {valor_formatado}</b></td></tr>
         </table>
     </div>
