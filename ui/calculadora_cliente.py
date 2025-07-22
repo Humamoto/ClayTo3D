@@ -112,27 +112,47 @@ def pagina_calculadora_cliente():
     with col2:
         telefone_cliente = st.text_input("Seu WhatsApp*", placeholder="(apenas números)")
 
-    # Nome da peça e tempo de impressão lado a lado
-    col3, col4 = st.columns(2)
+    # Nome da peça, tempo de impressão e link lado a lado
+    col3, col4, col5 = st.columns([2, 1, 2])
     with col3:
         nome_peca = st.text_input("Nome da Peça (opcional)", placeholder="Ex: Suporte de celular")
     with col4:
         tempo_impressao = st.number_input("Tempo de Impressão (horas)*", min_value=0.0, step=0.1)
+    with col5:
+        link_extra = st.text_input(
+            "Link para arquivos (Google Drive, Dropbox, etc)",
+            placeholder="Cole aqui o link compartilhável dos seus arquivos"
+        )
+        st.caption("Suba seu arquivo STL e imagens em um serviço como Google Drive, Dropbox ou WeTransfer e cole o link acima.")
 
     # Filamento e quantidade lado a lado
-    col5, col6 = st.columns(2)
-    with col5:
+    col6, col7 = st.columns([3, 1])
+    with col6:
         filamentos = listar_filamentos()
         opcoes = {f"{f[1]} - {f[2]} - {f[3]} (R$ {f[4]:.2f}/kg)": f for f in filamentos}
         filamento_escolhido = st.selectbox("Filamento*", list(opcoes.keys())) if opcoes else None
-    with col6:
-        quantidade_g = st.number_input("Quantidade de Filamento (g)*", min_value=0.0, step=1.0, key="qtd_filamento")
+    with col7:
+        quantidade_g = st.number_input("Qtd. Filamento (g)*", min_value=0.0, step=1.0, key="qtd_filamento")
 
-    # Link para arquivos
-    link_extra = st.text_input(
-        "Link para arquivos (Google Drive, Dropbox, etc)",
-        placeholder="Cole aqui o link compartilhável dos seus arquivos"
-    )
+    # Botão de adicionar filamento e lista de filamentos adicionados
+    col8, col9 = st.columns([1, 3])
+    with col8:
+        if st.button("Adicionar filamento") and filamento_escolhido and quantidade_g > 0:
+            f = opcoes[filamento_escolhido]
+            st.session_state.filamentos_lista.append({
+                'id_filamento': f[0],
+                'descricao': filamento_escolhido,
+                'quantidade_g_utilizada': quantidade_g,
+                'preco_kg': f[4]
+            })
+            st.success(f"Filamento adicionado: {filamento_escolhido} - {quantidade_g}g")
+    with col9:
+        if st.session_state.filamentos_lista:
+            st.markdown("**Filamentos adicionados:**")
+            for i, fil in enumerate(st.session_state.filamentos_lista):
+                st.write(f"{i+1}. {fil['descricao']} - {fil['quantidade_g_utilizada']}g")
+            if st.button("Limpar filamentos"):
+                st.session_state.filamentos_lista = []
 
     # Garante que anexos_info sempre existe
     anexos_info = []
