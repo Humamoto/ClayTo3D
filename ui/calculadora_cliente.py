@@ -67,6 +67,8 @@ def pagina_calculadora_cliente():
         st.session_state.orcamento_registrado = False
     if 'filamentos_lista' not in st.session_state:
         st.session_state.filamentos_lista = []
+    if 'orcamento_enviado' not in st.session_state:
+        st.session_state.orcamento_enviado = False
 
     nome_cliente = st.text_input("Seu nome*")
     telefone_cliente = st.text_input("Seu WhatsApp* (apenas números)")
@@ -201,6 +203,7 @@ def pagina_calculadora_cliente():
                 try:
                     enviar_pedido_google_sheets(dados)
                     st.success("Orçamento enviado com sucesso! Agora é só clicar no botão abaixo para enviar pelo WhatsApp.")
+                    st.session_state.orcamento_enviado = True
                 except Exception as e:
                     st.error(f"Erro ao salvar no Google Sheets: {e}")
             else:
@@ -233,3 +236,72 @@ def pagina_calculadora_cliente():
                         st.success("Orçamento registrado! Você pode acompanhar pelo admin.")
                     except Exception as e:
                         st.error(f"Erro ao registrar orçamento: {e}")
+
+        # Novo fluxo: botão único para solicitar orçamento, depois exibe botão do WhatsApp
+        if not st.session_state.orcamento_enviado:
+            if st.button("Solicitar orçamento via WhatsApp", key="btn_solicitar_orcamento_whatsapp"):
+                with st.spinner("Registrando orçamento..."):
+                    sucesso = False
+                    erro = None
+                    if IS_PUBLIC:
+                        dados = [
+                            st.session_state.orcamento['nome_cliente'],
+                            st.session_state.orcamento['telefone_cliente'],
+                            st.session_state.orcamento['nome_peca'],
+                            st.session_state.orcamento['tempo_impressao'],
+                            "; ".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']]),
+                            f"R$ {valor_formatado}",
+                            str(datetime.date.today()),
+                            next((a for a in st.session_state.orcamento['anexos'] if a.startswith('STL:')), ''),
+                            "; ".join([a for a in st.session_state.orcamento['anexos'] if a.startswith('Imagem:')]),
+                            next((a.replace('Link: ', '') for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), '')
+                        ]
+                        try:
+                            enviar_pedido_google_sheets(dados)
+                            sucesso = True
+                        except Exception as e:
+                            erro = f"Erro ao salvar no Google Sheets: {e}"
+                    else:
+                        if not st.session_state.orcamento_registrado:
+                            id_cliente = None
+                            filamentos_utilizados = [
+                                {
+                                    'id_filamento': fil['id_filamento'],
+                                    'quantidade_g_utilizada': fil['quantidade_g_utilizada'],
+                                    'preco_kg': fil['preco_kg']
+                                } for fil in st.session_state.orcamento['filamentos_utilizados']
+                            ]
+                            try:
+                                observacao = f"Nome: {st.session_state.orcamento['nome_cliente']} | WhatsApp: {st.session_state.orcamento['telefone_cliente']}"
+                                if st.session_state.orcamento['anexos']:
+                                    observacao += " | Anexos: " + "; ".join(st.session_state.orcamento['anexos'])
+                                adicionar_pedido_venda(
+                                    id_cliente=id_cliente,
+                                    nome_peca=st.session_state.orcamento['nome_peca'] or '-',
+                                    tempo_impressao_horas=st.session_state.orcamento['tempo_impressao'],
+                                    custo_impressao_hora=st.session_state.orcamento['custo_hora'],
+                                    filamentos_utilizados=filamentos_utilizados,
+                                    preco_arquivo=0.0,
+                                    margem_lucro_percentual=st.session_state.orcamento['margem'],
+                                    data_venda=str(datetime.date.today()),
+                                    status="Orçamento Solicitado",
+                                    observacao=observacao
+                                )
+                                st.session_state.orcamento_registrado = True
+                                sucesso = True
+                            except Exception as e:
+                                erro = f"Erro ao registrar orçamento: {e}"
+                    if sucesso:
+                        st.session_state.orcamento_enviado = True
+                        st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
+                    else:
+                        st.error(erro)
+
+        if st.session_state.orcamento_enviado and st.session_state.whatsapp_link_gerado:
+            st.markdown(f'''
+                <a href="{st.session_state.whatsapp_link_gerado}" target="_blank" style="display:block; text-align:center; margin: 1.5rem 0;">
+                    <button style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Enviar pelo WhatsApp
+                    </button>
+                </a>
+            ''', unsafe_allow_html=True)
