@@ -112,48 +112,22 @@ def pagina_calculadora_cliente():
     with col2:
         telefone_cliente = st.text_input("Seu WhatsApp*", placeholder="(apenas números)")
 
-    # Nome da peça, tempo de impressão e link lado a lado (campos menores)
-    col3, col4, col5 = st.columns([1, 0.7, 2.3])
+    # Nome da peça, tempo de impressão, peso total e link lado a lado
+    col3, col4, col5, col6 = st.columns([1, 0.7, 0.7, 2])
     with col3:
         nome_peca = st.text_input("Nome da Peça (opcional)", placeholder="Ex: Suporte de celular")
     with col4:
         tempo_impressao = st.number_input("Tempo (h)*", min_value=0.0, step=0.1)
     with col5:
+        peso_total = st.number_input("Peso total (g)*", min_value=0.0, step=1.0)
+    with col6:
         link_extra = st.text_input(
             "Link para arquivos (Google Drive, Dropbox, etc)",
             placeholder="Cole aqui o link compartilhável dos seus arquivos"
         )
         st.caption("Suba seu arquivo STL e imagens em um serviço como Google Drive, Dropbox ou WeTransfer e cole o link acima.")
 
-    # Filamento e quantidade lado a lado (campos menores)
-    col6, col7 = st.columns([1.5, 0.7])
-    with col6:
-        filamentos = listar_filamentos()
-        opcoes = {f"{f[1]} - {f[2]} - {f[3]} (R$ {f[4]:.2f}/kg)": f for f in filamentos}
-        filamento_escolhido = st.selectbox("Filamento*", list(opcoes.keys())) if opcoes else None
-    with col7:
-        quantidade_g = st.number_input("Qtd. Filamento (g)*", min_value=0.0, step=1.0, key="qtd_filamento")
-
-    # Botão de adicionar filamento e lista de filamentos adicionados
-    col8, col9 = st.columns([1, 3])
-    with col8:
-        if st.button("Adicionar filamento") and filamento_escolhido and quantidade_g > 0:
-            f = opcoes[filamento_escolhido]
-            st.session_state.filamentos_lista.append({
-                'id_filamento': f[0],
-                'descricao': filamento_escolhido,
-                'quantidade_g_utilizada': quantidade_g,
-                'preco_kg': f[4]
-            })
-            st.success(f"Filamento adicionado: {filamento_escolhido} - {quantidade_g}g")
-    with col9:
-        if st.session_state.filamentos_lista:
-            st.markdown("**Filamentos adicionados:**")
-            for i, fil in enumerate(st.session_state.filamentos_lista):
-                st.write(f"{i+1}. {fil['descricao']} - {fil['quantidade_g_utilizada']}g")
-            if st.button("Limpar filamentos"):
-                st.session_state.filamentos_lista = []
-
+    # Remove lógica de filamentos do cliente
     # Garante que anexos_info sempre existe
     anexos_info = []
     if link_extra:
@@ -165,12 +139,11 @@ def pagina_calculadora_cliente():
     if calcular:
         if not nome_cliente or not telefone_cliente:
             st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
-        elif not st.session_state.filamentos_lista:
-            st.warning("Adicione pelo menos um filamento para calcular o orçamento.")
         else:
             custo_hora = 10.0
             margem = 1.5
-            preco_custo_filamentos = sum([fil['preco_kg'] * (fil['quantidade_g_utilizada']/1000) for fil in st.session_state.filamentos_lista])
+            preco_kg = 100.0  # Preço fixo do filamento
+            preco_custo_filamentos = preco_kg * (peso_total / 1000)
             preco_custo = custo_hora * tempo_impressao + preco_custo_filamentos
             preco_venda = preco_custo * margem
 
@@ -179,7 +152,7 @@ def pagina_calculadora_cliente():
                 'telefone_cliente': telefone_cliente,
                 'nome_peca': nome_peca,
                 'tempo_impressao': tempo_impressao,
-                'filamentos_utilizados': st.session_state.filamentos_lista.copy(),
+                'peso_total': peso_total,
                 'preco_venda': preco_venda,
                 'custo_hora': custo_hora,
                 'margem': margem,
@@ -191,7 +164,6 @@ def pagina_calculadora_cliente():
     if st.session_state.orcamento:
         preco_venda = st.session_state.orcamento['preco_venda']
         valor_formatado = f"{preco_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        filamentos_html = "<br>".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']])
         st.markdown(f"""
     <div style='background: #23243a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 0 16px #7c3aed44;'>
         <h3 style='text-align:center; margin-bottom:1.2rem;'>Resumo do Orçamento</h3>
@@ -200,7 +172,7 @@ def pagina_calculadora_cliente():
             <tr><td><b>WhatsApp:</b></td><td>{st.session_state.orcamento['telefone_cliente']}</td></tr>
             <tr><td><b>Peça:</b></td><td>{st.session_state.orcamento['nome_peca'] or '-'}</td></tr>
             <tr><td><b>Tempo de Impressão:</b></td><td>{st.session_state.orcamento['tempo_impressao']} horas</td></tr>
-            <tr><td><b>Filamentos:</b></td><td>{filamentos_html}</td></tr>
+            <tr><td><b>Peso Total:</b></td><td>{st.session_state.orcamento['peso_total']}g</td></tr>
             <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {valor_formatado}</b></td></tr>
         </table>
     </div>
@@ -209,9 +181,7 @@ def pagina_calculadora_cliente():
 
         # Gere o link do WhatsApp sempre que houver orçamento
         numero_whatsapp = "5541997730248"
-        mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
-        for fil in st.session_state.orcamento['filamentos_utilizados']:
-            mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
+        mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\nPeso total: {st.session_state.orcamento['peso_total']}g\n"""
         mensagem += f"Valor estimado: R$ {valor_formatado}"
         if st.session_state.orcamento['anexos']:
             mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
@@ -231,7 +201,7 @@ def pagina_calculadora_cliente():
                                 st.session_state.orcamento['telefone_cliente'],
                                 st.session_state.orcamento['nome_peca'],
                                 st.session_state.orcamento['tempo_impressao'],
-                                "; ".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']]),
+                                st.session_state.orcamento['peso_total'],
                                 f"R$ {valor_formatado}",
                                 str(datetime.date.today()),
                                 next((a for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), ''),
@@ -246,13 +216,6 @@ def pagina_calculadora_cliente():
                         else:
                             if not st.session_state.orcamento_registrado:
                                 id_cliente = None
-                                filamentos_utilizados = [
-                                    {
-                                        'id_filamento': fil['id_filamento'],
-                                        'quantidade_g_utilizada': fil['quantidade_g_utilizada'],
-                                        'preco_kg': fil['preco_kg']
-                                    } for fil in st.session_state.orcamento['filamentos_utilizados']
-                                ]
                                 try:
                                     observacao = f"Nome: {st.session_state.orcamento['nome_cliente']} | WhatsApp: {st.session_state.orcamento['telefone_cliente']}"
                                     if st.session_state.orcamento['anexos']:
@@ -262,7 +225,7 @@ def pagina_calculadora_cliente():
                                         nome_peca=st.session_state.orcamento['nome_peca'] or '-',
                                         tempo_impressao_horas=st.session_state.orcamento['tempo_impressao'],
                                         custo_impressao_hora=st.session_state.orcamento['custo_hora'],
-                                        filamentos_utilizados=filamentos_utilizados,
+                                        filamentos_utilizados=[], # Não há filamentos para orçamentos fixos
                                         preco_arquivo=0.0,
                                         margem_lucro_percentual=st.session_state.orcamento['margem'],
                                         data_venda=str(datetime.date.today()),
@@ -312,7 +275,7 @@ def pagina_calculadora_cliente():
             st.session_state.orcamento.get('telefone_cliente') != telefone_cliente or
             st.session_state.orcamento.get('nome_peca') != nome_peca or
             st.session_state.orcamento.get('tempo_impressao') != tempo_impressao or
-            st.session_state.orcamento.get('filamentos_utilizados') != st.session_state.filamentos_lista or
+            st.session_state.orcamento.get('peso_total') != peso_total or
             st.session_state.orcamento.get('anexos') != anexos_info
         )
     ):
