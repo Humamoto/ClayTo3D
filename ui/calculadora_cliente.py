@@ -8,6 +8,10 @@ import os as _os
 import socket
 import time
 from streamlit_extras.stylable_container import stylable_container
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2 import service_account
+import tempfile
 
 # Google Sheets integração
 try:
@@ -53,6 +57,26 @@ def listar_filamentos():
     else:
         from models.filamento import listar_filamentos as lf
         return lf()
+
+# Função para upload no Google Drive
+
+def upload_to_drive(file_buffer, filename, folder_id, creds_dict):
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_buffer.getbuffer())
+        temp_path = tmp.name
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    service = build('drive', 'v3', credentials=creds)
+    file_metadata = {
+        'name': filename,
+        'parents': [folder_id]
+    }
+    media = MediaFileUpload(temp_path, resumable=True)
+    file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    file_id = file.get('id')
+    service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
+    link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
+    return link
 
 def pagina_calculadora_cliente():
     st.title("Simule seu Orçamento 3D")
@@ -108,13 +132,15 @@ def pagina_calculadora_cliente():
             st.session_state.filamentos_lista = []
 
     st.markdown("**Anexos (opcional):**")
+    arquivo_stl = st.file_uploader("Arquivo STL", type=["stl"])
+    imagens = st.file_uploader("Imagens (JPG, PNG)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
     st.markdown("""
     **Como anexar arquivos ao seu orçamento:**
-    - Suba seu arquivo STL e imagens em um serviço como [Google Drive](https://drive.google.com), [Dropbox](https://dropbox.com) ou [WeTransfer](https://wetransfer.com).
-    - Gere um link compartilhável e cole no campo abaixo.
+    - Você pode enviar arquivos STL e imagens acima, ou subir em um serviço como [Google Drive](https://drive.google.com), [Dropbox](https://dropbox.com) ou [WeTransfer](https://wetransfer.com).
+    - Gere um link compartilhável e cole no campo abaixo (opcional).
     """)
     link_extra = st.text_input(
-        "Link para arquivos (Google Drive, Dropbox, etc)",
+        "Link para arquivos (Google Drive, Dropbox, etc) (opcional)",
         placeholder="Cole aqui o link compartilhável dos seus arquivos"
     )
 
@@ -126,8 +152,8 @@ def pagina_calculadora_cliente():
             st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
         elif not st.session_state.filamentos_lista:
             st.warning("Adicione pelo menos um filamento para calcular o orçamento.")
-        elif not link_extra:
-            st.warning("Por favor, cole o link dos arquivos STL/imagens para análise do orçamento.")
+        elif not (arquivo_stl or imagens or link_extra):
+            st.warning("Por favor, envie pelo menos um arquivo ou cole o link dos arquivos STL/imagens para análise do orçamento.")
         else:
             custo_hora = 10.0
             margem = 1.5
@@ -136,10 +162,17 @@ def pagina_calculadora_cliente():
             preco_venda = preco_custo * margem
 
             anexos_info = []
-            pasta_anexos = "anexos_orcamento"
-            _os.makedirs(pasta_anexos, exist_ok=True)
-            # Não salva mais arquivos locais, só usa o link
-            anexos_info.append(f"Link: {link_extra}")
+            creds_dict = dict(st.secrets["gcp_service_account"])
+            folder_id = "1vuIt_LPKW_DdNXT8apMb2yiYkKnw_Jjn"
+            if arquivo_stl:
+                stl_link = upload_to_drive(arquivo_stl, arquivo_stl.name, folder_id, creds_dict)
+                anexos_info.append(f"STL: {stl_link}")
+            if imagens:
+                for img in imagens:
+                    img_link = upload_to_drive(img, img.name, folder_id, creds_dict)
+                    anexos_info.append(f"Imagem: {img_link}")
+            if link_extra:
+                anexos_info.append(f"Link: {link_extra}")
 
             st.session_state.orcamento = {
                 'nome_cliente': nome_cliente,
