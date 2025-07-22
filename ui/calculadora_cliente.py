@@ -12,6 +12,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
 import tempfile
+import requests
 
 # Google Sheets integração
 try:
@@ -112,6 +113,41 @@ def pagina_calculadora_cliente():
     with col2:
         telefone_cliente = st.text_input("Seu WhatsApp*", placeholder="(apenas números)")
 
+    # Campos de endereço
+    col_cep, col_num = st.columns([1, 1])
+    with col_cep:
+        cep = st.text_input("CEP*", max_chars=9, placeholder="00000-000")
+    with col_num:
+        numero = st.text_input("Número*", placeholder="Ex: 123")
+
+    # Busca automática do endereço ao digitar o CEP
+    if cep and len(cep.replace("-", "")) == 8:
+        try:
+            resp = requests.get(f"https://viacep.com.br/ws/{cep.replace('-', '')}/json/")
+            if resp.ok and "erro" not in resp.json():
+                data = resp.json()
+                logradouro = st.text_input("Rua*", value=data.get("logradouro", ""))
+                bairro = st.text_input("Bairro*", value=data.get("bairro", ""))
+                cidade = st.text_input("Cidade*", value=data.get("localidade", ""))
+                estado = st.text_input("Estado*", value=data.get("uf", ""))
+            else:
+                logradouro = st.text_input("Rua*")
+                bairro = st.text_input("Bairro*")
+                cidade = st.text_input("Cidade*")
+                estado = st.text_input("Estado*")
+        except Exception:
+            logradouro = st.text_input("Rua*")
+            bairro = st.text_input("Bairro*")
+            cidade = st.text_input("Cidade*")
+            estado = st.text_input("Estado*")
+    else:
+        logradouro = st.text_input("Rua*")
+        bairro = st.text_input("Bairro*")
+        cidade = st.text_input("Cidade*")
+        estado = st.text_input("Estado*")
+
+    complemento = st.text_input("Complemento (opcional)")
+
     # Nome da peça, tempo de impressão, peso total e link lado a lado
     col3, col4, col5, col6 = st.columns([1, 0.7, 0.7, 2])
     with col3:
@@ -156,7 +192,14 @@ def pagina_calculadora_cliente():
                 'preco_venda': preco_venda,
                 'custo_hora': custo_hora,
                 'margem': margem,
-                'anexos': anexos_info
+                'anexos': anexos_info,
+                'cep': cep,
+                'logradouro': logradouro,
+                'numero': numero,
+                'complemento': complemento,
+                'bairro': bairro,
+                'cidade': cidade,
+                'estado': estado
             }
             st.session_state.whatsapp_link_gerado = None
             st.session_state.orcamento_registrado = False
@@ -276,7 +319,14 @@ def pagina_calculadora_cliente():
             st.session_state.orcamento.get('nome_peca') != nome_peca or
             st.session_state.orcamento.get('tempo_impressao') != tempo_impressao or
             st.session_state.orcamento.get('peso_total') != peso_total or
-            st.session_state.orcamento.get('anexos') != anexos_info
+            st.session_state.orcamento.get('anexos') != anexos_info or
+            st.session_state.orcamento.get('cep') != cep or
+            st.session_state.orcamento.get('logradouro') != logradouro or
+            st.session_state.orcamento.get('numero') != numero or
+            st.session_state.orcamento.get('complemento') != complemento or
+            st.session_state.orcamento.get('bairro') != bairro or
+            st.session_state.orcamento.get('cidade') != cidade or
+            st.session_state.orcamento.get('estado') != estado
         )
     ):
         st.session_state.orcamento = None
