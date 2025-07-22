@@ -59,9 +59,34 @@ def pagina_calculadora_cliente():
     st.write("Preencha os dados abaixo para estimar o valor da sua impressão 3D.")
     st.info("O valor apresentado é uma estimativa. O valor final pode variar após análise do projeto.")
 
-    # Adiciona iframe do MakerWorld para teste
-    st.markdown("<h4 style='margin-top:2rem;'>Explore modelos 3D em <a href='https://makerworld.com/pt' target='_blank'>MakerWorld</a>:</h4>", unsafe_allow_html=True)
-    st.components.v1.iframe("https://makerworld.com/pt", height=600)
+    # Botão estilizado para MakerWorld
+    st.markdown('''
+        <div style='text-align:center; margin: 2rem 0;'>
+            <a href="https://makerworld.com/pt" target="_blank" style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; text-decoration: none; display: inline-block;">
+                <img src="https://makerworld.com/favicon.ico" width="32" style="vertical-align:middle; margin-right:0.7rem;"> Explorar modelos 3D em MakerWorld
+            </a>
+        </div>
+    ''', unsafe_allow_html=True)
+
+    # Campo para colar link de modelo do MakerWorld
+    modelo_url = st.text_input("Cole o link de um modelo 3D do MakerWorld (opcional):")
+    if modelo_url:
+        st.write(f"Link do modelo adicionado ao orçamento: {modelo_url}")
+        # Tenta extrair uma imagem de preview do modelo
+        import re
+        import requests
+        from bs4 import BeautifulSoup
+        try:
+            if modelo_url.startswith("http") and "makerworld.com" in modelo_url:
+                resp = requests.get(modelo_url, timeout=5)
+                if resp.ok:
+                    soup = BeautifulSoup(resp.text, 'html.parser')
+                    # MakerWorld usa meta property="og:image"
+                    og_image = soup.find('meta', property='og:image')
+                    if og_image and og_image.get('content'):
+                        st.image(og_image['content'], caption="Prévia do modelo MakerWorld", use_column_width=True)
+        except Exception as e:
+            st.info("Não foi possível carregar a prévia da imagem do modelo.")
 
     if 'orcamento' not in st.session_state:
         st.session_state.orcamento = None
