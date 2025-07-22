@@ -105,19 +105,19 @@ def pagina_calculadora_cliente():
     if 'orcamento_enviado' not in st.session_state:
         st.session_state.orcamento_enviado = False
 
-    # Nome e WhatsApp lado a lado
-    col1, col2 = st.columns(2)
+    # Nome e WhatsApp lado a lado (campos menores)
+    col1, col2 = st.columns([1, 1])
     with col1:
         nome_cliente = st.text_input("Seu nome*", placeholder="Nome completo")
     with col2:
         telefone_cliente = st.text_input("Seu WhatsApp*", placeholder="(apenas números)")
 
-    # Nome da peça, tempo de impressão e link lado a lado
-    col3, col4, col5 = st.columns([2, 1, 2])
+    # Nome da peça, tempo de impressão e link lado a lado (campos menores)
+    col3, col4, col5 = st.columns([1, 0.7, 2.3])
     with col3:
         nome_peca = st.text_input("Nome da Peça (opcional)", placeholder="Ex: Suporte de celular")
     with col4:
-        tempo_impressao = st.number_input("Tempo de Impressão (horas)*", min_value=0.0, step=0.1)
+        tempo_impressao = st.number_input("Tempo (h)*", min_value=0.0, step=0.1)
     with col5:
         link_extra = st.text_input(
             "Link para arquivos (Google Drive, Dropbox, etc)",
@@ -125,8 +125,8 @@ def pagina_calculadora_cliente():
         )
         st.caption("Suba seu arquivo STL e imagens em um serviço como Google Drive, Dropbox ou WeTransfer e cole o link acima.")
 
-    # Filamento e quantidade lado a lado
-    col6, col7 = st.columns([3, 1])
+    # Filamento e quantidade lado a lado (campos menores)
+    col6, col7 = st.columns([1.5, 0.7])
     with col6:
         filamentos = listar_filamentos()
         opcoes = {f"{f[1]} - {f[2]} - {f[3]} (R$ {f[4]:.2f}/kg)": f for f in filamentos}
