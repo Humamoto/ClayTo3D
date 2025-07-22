@@ -27,7 +27,6 @@ def enviar_pedido_google_sheets(dados):
             sheet.append_row(dados)
     except Exception as e:
         st.error(f"Erro ao salvar no Google Sheets: {e}")
-        st.code(creds_dict['private_key'])
 
 
 # Detecta ambiente público automaticamente
