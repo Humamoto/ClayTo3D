@@ -144,33 +144,31 @@ def pagina_calculadora_cliente():
 
     if st.session_state.orcamento:
         preco_venda = st.session_state.orcamento['preco_venda']
-        # Cartão de resumo do orçamento
-        with stylable_container(key="resumo_orcamento", css_styles="background: #23243a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 0 16px #7c3aed44;"):
-            st.markdown("<h3 style='text-align:center;'>Resumo do Orçamento</h3>", unsafe_allow_html=True)
-            st.write(f"**Nome:** {st.session_state.orcamento['nome_cliente']}")
-            st.write(f"**WhatsApp:** {st.session_state.orcamento['telefone_cliente']}")
-            st.write(f"**Peça:** {st.session_state.orcamento['nome_peca'] or '-'}")
-            st.write(f"**Tempo de Impressão:** {st.session_state.orcamento['tempo_impressao']} horas")
-            st.write("**Filamentos:**")
-            for fil in st.session_state.orcamento['filamentos_utilizados']:
-                st.write(f"- {fil['descricao']} - {fil['quantidade_g_utilizada']}g")
-            st.write(f"**Valor estimado:** <span style='font-size:1.5rem; color:#ff4ecd;'>R$ {preco_venda:.2f}</span>", unsafe_allow_html=True)
-            if st.session_state.orcamento['anexos']:
-                st.write("**Anexos:**")
-                for a in st.session_state.orcamento['anexos']:
-                    st.write(f"- {a}")
-
+        filamentos_html = "<br>".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']])
+        st.markdown(f"""
+    <div style='background: #23243a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 0 16px #7c3aed44;'>
+        <h3 style='text-align:center; margin-bottom:1.2rem;'>Resumo do Orçamento</h3>
+        <table style='width:100%; font-size:1.1rem; color:#fff;'>
+            <tr><td><b>Nome:</b></td><td>{st.session_state.orcamento['nome_cliente']}</td></tr>
+            <tr><td><b>WhatsApp:</b></td><td>{st.session_state.orcamento['telefone_cliente']}</td></tr>
+            <tr><td><b>Peça:</b></td><td>{st.session_state.orcamento['nome_peca'] or '-'}</td></tr>
+            <tr><td><b>Tempo de Impressão:</b></td><td>{st.session_state.orcamento['tempo_impressao']} horas</td></tr>
+            <tr><td><b>Filamentos:</b></td><td>{filamentos_html}</td></tr>
+            <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {preco_venda:.2f}</b></td></tr>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
         st.caption("Este valor é uma estimativa. O valor final pode variar após análise do projeto.")
 
         # Botão de WhatsApp destacado
-        if st.session_state.whatsapp_link:
-            st.markdown('''
-                <a href="{0}" target="_blank" style="display:block; text-align:center; margin: 1.5rem 0;">
-                    <button style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Solicitar orçamento via WhatsApp
-                    </button>
-                </a>
-            '''.format(st.session_state.whatsapp_link), unsafe_allow_html=True)
+        if st.session_state.get("whatsapp_link"):
+            st.markdown(f'''
+            <a href="{st.session_state.whatsapp_link}" target="_blank" style="display:block; text-align:center; margin: 1.5rem 0;">
+                <button style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Solicitar orçamento via WhatsApp
+                </button>
+            </a>
+        ''', unsafe_allow_html=True)
 
     if st.button("Solicitar orçamento"):
         with st.spinner("Enviando orçamento..."):
@@ -190,8 +188,7 @@ def pagina_calculadora_cliente():
                 ]
                 try:
                     enviar_pedido_google_sheets(dados)
-                    st.balloons()
-                    st.success("Orçamento enviado para a ClayTo3D! Você pode acompanhar pelo WhatsApp.")
+                    st.success("Orçamento enviado com sucesso! Agora é só clicar no botão abaixo para enviar pelo WhatsApp.")
                 except Exception as e:
                     st.error(f"Erro ao salvar no Google Sheets: {e}")
             else:
@@ -222,18 +219,17 @@ def pagina_calculadora_cliente():
                             observacao=observacao
                         )
                         st.session_state.orcamento_registrado = True
-                        st.balloons()
                         st.success("Orçamento registrado! Você pode acompanhar pelo admin.")
                     except Exception as e:
                         st.error(f"Erro ao registrar orçamento: {e}")
-            # Gera o link do WhatsApp (sempre)
-            numero_whatsapp = "5541997730248"
-            mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
-            for fil in st.session_state.orcamento['filamentos_utilizados']:
-                mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
-            mensagem += f"Valor estimado: R$ {st.session_state.orcamento['preco_venda']:.2f}"
-            if st.session_state.orcamento['anexos']:
-                mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
-            mensagem += "\n\nAguardo retorno!"
-            mensagem_url = urllib.parse.quote(mensagem)
-            st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
+                # Gera o link do WhatsApp (sempre)
+                numero_whatsapp = "5541997730248"
+                mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
+                for fil in st.session_state.orcamento['filamentos_utilizados']:
+                    mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
+                mensagem += f"Valor estimado: R$ {st.session_state.orcamento['preco_venda']:.2f}"
+                if st.session_state.orcamento['anexos']:
+                    mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
+                mensagem += "\n\nAguardo retorno!"
+                mensagem_url = urllib.parse.quote(mensagem)
+                st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
