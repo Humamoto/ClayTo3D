@@ -142,6 +142,11 @@ def pagina_calculadora_cliente():
         placeholder="Cole aqui o link compartilhável dos seus arquivos"
     )
 
+    # Garante que anexos_info sempre existe
+    anexos_info = []
+    if link_extra:
+        anexos_info.append(f"Link: {link_extra}")
+
     # Botão Calcular Orçamento
     calcular = st.button("Calcular orçamento")
 
@@ -156,10 +161,6 @@ def pagina_calculadora_cliente():
             preco_custo_filamentos = sum([fil['preco_kg'] * (fil['quantidade_g_utilizada']/1000) for fil in st.session_state.filamentos_lista])
             preco_custo = custo_hora * tempo_impressao + preco_custo_filamentos
             preco_venda = preco_custo * margem
-
-            anexos_info = []
-            if link_extra:
-                anexos_info.append(f"Link: {link_extra}")
 
             st.session_state.orcamento = {
                 'nome_cliente': nome_cliente,
@@ -283,7 +284,7 @@ def pagina_calculadora_cliente():
             st.session_state.orcamento.get('nome_peca') != nome_peca or
             st.session_state.orcamento.get('tempo_impressao') != tempo_impressao or
             st.session_state.orcamento.get('filamentos_utilizados') != st.session_state.filamentos_lista or
-            st.session_state.orcamento.get('anexos') != anexos_info # Adicionado para verificar o link
+            st.session_state.orcamento.get('anexos') != anexos_info
         )
     ):
         st.session_state.orcamento = None
