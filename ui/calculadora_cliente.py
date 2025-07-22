@@ -131,16 +131,14 @@ def pagina_calculadora_cliente():
         if st.button("Limpar filamentos"):
             st.session_state.filamentos_lista = []
 
-    st.markdown("**Anexos (opcional):**")
-    arquivo_stl = st.file_uploader("Arquivo STL", type=["stl"])
-    imagens = st.file_uploader("Imagens (JPG, PNG)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    st.markdown("**Anexos (obrigatório):**")
     st.markdown("""
     **Como anexar arquivos ao seu orçamento:**
-    - Você pode enviar arquivos STL e imagens acima, ou subir em um serviço como [Google Drive](https://drive.google.com), [Dropbox](https://dropbox.com) ou [WeTransfer](https://wetransfer.com).
-    - Gere um link compartilhável e cole no campo abaixo (opcional).
+    - Suba seu arquivo STL e imagens em um serviço como [Google Drive](https://drive.google.com), [Dropbox](https://dropbox.com) ou [WeTransfer](https://wetransfer.com).
+    - Gere um link compartilhável e cole no campo abaixo.
     """)
     link_extra = st.text_input(
-        "Link para arquivos (Google Drive, Dropbox, etc) (opcional)",
+        "Link para arquivos (Google Drive, Dropbox, etc)",
         placeholder="Cole aqui o link compartilhável dos seus arquivos"
     )
 
@@ -152,8 +150,8 @@ def pagina_calculadora_cliente():
             st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
         elif not st.session_state.filamentos_lista:
             st.warning("Adicione pelo menos um filamento para calcular o orçamento.")
-        elif not (arquivo_stl or imagens or link_extra):
-            st.warning("Por favor, envie pelo menos um arquivo ou cole o link dos arquivos STL/imagens para análise do orçamento.")
+        elif not link_extra:
+            st.warning("Por favor, cole o link dos arquivos STL/imagens para análise do orçamento.")
         else:
             custo_hora = 10.0
             margem = 1.5
@@ -161,18 +159,7 @@ def pagina_calculadora_cliente():
             preco_custo = custo_hora * tempo_impressao + preco_custo_filamentos
             preco_venda = preco_custo * margem
 
-            anexos_info = []
-            creds_dict = dict(st.secrets["gcp_service_account"])
-            folder_id = "1vuIt_LPKW_DdNXT8apMb2yiYkKnw_Jjn"
-            if arquivo_stl:
-                stl_link = upload_to_drive(arquivo_stl, arquivo_stl.name, folder_id, creds_dict)
-                anexos_info.append(f"STL: {stl_link}")
-            if imagens:
-                for img in imagens:
-                    img_link = upload_to_drive(img, img.name, folder_id, creds_dict)
-                    anexos_info.append(f"Imagem: {img_link}")
-            if link_extra:
-                anexos_info.append(f"Link: {link_extra}")
+            anexos_info = [f"Link: {link_extra}"]
 
             st.session_state.orcamento = {
                 'nome_cliente': nome_cliente,
