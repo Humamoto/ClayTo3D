@@ -59,6 +59,10 @@ def pagina_calculadora_cliente():
     st.write("Preencha os dados abaixo para estimar o valor da sua impressão 3D.")
     st.info("O valor apresentado é uma estimativa. O valor final pode variar após análise do projeto.")
 
+    # Adiciona iframe do MakerWorld para teste
+    st.markdown("<h4 style='margin-top:2rem;'>Explore modelos 3D em <a href='https://makerworld.com/pt' target='_blank'>MakerWorld</a>:</h4>", unsafe_allow_html=True)
+    st.components.v1.iframe("https://makerworld.com/pt", height=600)
+
     if 'orcamento' not in st.session_state:
         st.session_state.orcamento = None
     if 'whatsapp_link' not in st.session_state:
