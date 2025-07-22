@@ -161,6 +161,27 @@ def pagina_calculadora_cliente():
     """, unsafe_allow_html=True)
         st.caption("Este valor é uma estimativa. O valor final pode variar após análise do projeto.")
 
+        # Gere o link do WhatsApp sempre que houver orçamento
+        numero_whatsapp = "5541997730248"
+        mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
+        for fil in st.session_state.orcamento['filamentos_utilizados']:
+            mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
+        mensagem += f"Valor estimado: R$ {valor_formatado}"
+        if st.session_state.orcamento['anexos']:
+            mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
+        mensagem += "\n\nAguardo retorno!"
+        mensagem_url = urllib.parse.quote(mensagem)
+        st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
+
+        # Exibe o botão sempre que houver orçamento
+        st.markdown(f'''
+            <a href="{st.session_state.whatsapp_link}" target="_blank" style="display:block; text-align:center; margin: 1.5rem 0;">
+                <button style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Solicitar orçamento via WhatsApp
+                </button>
+            </a>
+        ''', unsafe_allow_html=True)
+
     if st.button("Solicitar orçamento"):
         with st.spinner("Enviando orçamento..."):
             if IS_PUBLIC:
@@ -212,24 +233,4 @@ def pagina_calculadora_cliente():
                         st.success("Orçamento registrado! Você pode acompanhar pelo admin.")
                     except Exception as e:
                         st.error(f"Erro ao registrar orçamento: {e}")
-                # Gera o link do WhatsApp (sempre, mesmo em caso de erro)
-                numero_whatsapp = "5541997730248"
-                mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
-                for fil in st.session_state.orcamento['filamentos_utilizados']:
-                    mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
-                mensagem += f"Valor estimado: R$ {valor_formatado}"
-                if st.session_state.orcamento['anexos']:
-                    mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
-                mensagem += "\n\nAguardo retorno!"
-                mensagem_url = urllib.parse.quote(mensagem)
-                st.session_state.whatsapp_link = f"https://wa.me/{numero_whatsapp}?text={mensagem_url}"
-
-    # Fora do bloco do botão, sempre exiba o botão se o link existir:
-    if st.session_state.get("whatsapp_link"):
-        st.markdown(f'''
-            <a href="{st.session_state.whatsapp_link}" target="_blank" style="display:block; text-align:center; margin: 1.5rem 0;">
-                <button style="background: linear-gradient(90deg, #ff4ecd 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: bold; box-shadow: 0 0 16px #ff4ecd88; cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="32" style="vertical-align:middle;"> Solicitar orçamento via WhatsApp
-                </button>
-            </a>
-        ''', unsafe_allow_html=True)
+                # O botão do WhatsApp já é exibido acima, pois o link é sempre gerado
