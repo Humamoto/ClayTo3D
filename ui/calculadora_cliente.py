@@ -116,7 +116,7 @@ def pagina_calculadora_cliente():
     # Campos de endereço (compactos)
     col_cep, col_num = st.columns([0.8, 0.5])
     with col_cep:
-        cep = st.text_input("CEP*", max_chars=9, placeholder="00000-000")
+        cep = st.text_input("CEP*", max_chars=9, placeholder="00000000")
     with col_num:
         numero = st.text_input("Número*", placeholder="Ex: 123")
 
@@ -178,12 +178,10 @@ def pagina_calculadora_cliente():
         peso_total = st.number_input("Peso total (g)*", min_value=0.0, step=1.0)
     with col6:
         link_extra = st.text_input(
-            "Link para arquivos (Google Drive, Dropbox, etc)",
-            placeholder="Cole aqui o link compartilhável dos seus arquivos"
+            "Link do arquivo de impressão",
+            placeholder="https://makerworld.com"
         )
-        st.caption("Suba seu arquivo STL e imagens em um serviço como Google Drive, Dropbox ou WeTransfer e cole o link acima.")
 
-    # Remove lógica de filamentos do cliente
     # Garante que anexos_info sempre existe
     anexos_info = []
     if link_extra:
