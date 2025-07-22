@@ -27,11 +27,7 @@ def enviar_pedido_google_sheets(dados):
             sheet.append_row(dados)
     except Exception as e:
         st.error(f"Erro ao salvar no Google Sheets: {e}")
-        # Mantenha os prints de debug temporariamente para ver o conteúdo
-        st.write("DEBUG - creds_dict['private_key'] recebido:")
         st.code(creds_dict['private_key'])
-        st.write(f"DEBUG - Length: {len(creds_dict['private_key'])}")
-        st.write(f"DEBUG - Newline count (literal \n): {creds_dict['private_key'].count('\n')}")
 
 
 # Detecta ambiente público automaticamente
@@ -149,7 +145,6 @@ def pagina_calculadora_cliente():
         preco_venda = st.session_state.orcamento['preco_venda']
         st.success(f"Valor estimado: R$ {preco_venda:.2f}")
         st.caption("Este valor é uma estimativa. O valor final pode variar após análise do projeto.")
-        st.write(f"IS_PUBLIC: {IS_PUBLIC}")  # Debug temporário para checar ambiente
 
         if st.button("Solicitar orçamento"):
             if IS_PUBLIC:
