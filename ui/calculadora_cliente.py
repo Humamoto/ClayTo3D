@@ -184,6 +184,19 @@ def pagina_calculadora_cliente():
             </a>
         ''', unsafe_allow_html=True)
 
+    # Limpa orçamento se qualquer campo relevante mudar
+    if (
+        st.session_state.get('orcamento') and (
+            st.session_state.orcamento.get('nome_cliente') != nome_cliente or
+            st.session_state.orcamento.get('telefone_cliente') != telefone_cliente or
+            st.session_state.orcamento.get('nome_peca') != nome_peca or
+            st.session_state.orcamento.get('tempo_impressao') != tempo_impressao or
+            st.session_state.orcamento.get('filamentos_utilizados') != st.session_state.filamentos_lista
+        )
+    ):
+        st.session_state.orcamento = None
+        st.session_state.orcamento_enviado = False
+
     if st.button("Solicitar orçamento"):
         with st.spinner("Enviando orçamento..."):
             if IS_PUBLIC:
