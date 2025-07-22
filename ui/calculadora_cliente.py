@@ -113,8 +113,8 @@ def pagina_calculadora_cliente():
     with col2:
         telefone_cliente = st.text_input("Seu WhatsApp*", placeholder="(apenas números)")
 
-    # Campos de endereço
-    col_cep, col_num = st.columns([1, 1])
+    # Campos de endereço (compactos)
+    col_cep, col_num = st.columns([0.8, 0.5])
     with col_cep:
         cep = st.text_input("CEP*", max_chars=9, placeholder="00000-000")
     with col_num:
@@ -126,25 +126,45 @@ def pagina_calculadora_cliente():
             resp = requests.get(f"https://viacep.com.br/ws/{cep.replace('-', '')}/json/")
             if resp.ok and "erro" not in resp.json():
                 data = resp.json()
-                logradouro = st.text_input("Rua*", value=data.get("logradouro", ""))
-                bairro = st.text_input("Bairro*", value=data.get("bairro", ""))
-                cidade = st.text_input("Cidade*", value=data.get("localidade", ""))
-                estado = st.text_input("Estado*", value=data.get("uf", ""))
+                col_log, col_bai, col_cid, col_uf = st.columns([1.5, 1, 1, 0.5])
+                with col_log:
+                    logradouro = st.text_input("Rua*", value=data.get("logradouro", ""))
+                with col_bai:
+                    bairro = st.text_input("Bairro*", value=data.get("bairro", ""))
+                with col_cid:
+                    cidade = st.text_input("Cidade*", value=data.get("localidade", ""))
+                with col_uf:
+                    estado = st.text_input("Estado*", value=data.get("uf", ""))
             else:
-                logradouro = st.text_input("Rua*")
-                bairro = st.text_input("Bairro*")
-                cidade = st.text_input("Cidade*")
-                estado = st.text_input("Estado*")
+                col_log, col_bai, col_cid, col_uf = st.columns([1.5, 1, 1, 0.5])
+                with col_log:
+                    logradouro = st.text_input("Rua*")
+                with col_bai:
+                    bairro = st.text_input("Bairro*")
+                with col_cid:
+                    cidade = st.text_input("Cidade*")
+                with col_uf:
+                    estado = st.text_input("Estado*")
         except Exception:
-            logradouro = st.text_input("Rua*")
-            bairro = st.text_input("Bairro*")
-            cidade = st.text_input("Cidade*")
-            estado = st.text_input("Estado*")
+            col_log, col_bai, col_cid, col_uf = st.columns([1.5, 1, 1, 0.5])
+            with col_log:
+                logradouro = st.text_input("Rua*")
+            with col_bai:
+                bairro = st.text_input("Bairro*")
+            with col_cid:
+                cidade = st.text_input("Cidade*")
+            with col_uf:
+                estado = st.text_input("Estado*")
     else:
-        logradouro = st.text_input("Rua*")
-        bairro = st.text_input("Bairro*")
-        cidade = st.text_input("Cidade*")
-        estado = st.text_input("Estado*")
+        col_log, col_bai, col_cid, col_uf = st.columns([1.5, 1, 1, 0.5])
+        with col_log:
+            logradouro = st.text_input("Rua*")
+        with col_bai:
+            bairro = st.text_input("Bairro*")
+        with col_cid:
+            cidade = st.text_input("Cidade*")
+        with col_uf:
+            estado = st.text_input("Estado*")
 
     complemento = st.text_input("Complemento (opcional)")
 
