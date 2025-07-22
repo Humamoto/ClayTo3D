@@ -144,6 +144,7 @@ def pagina_calculadora_cliente():
 
     if st.session_state.orcamento:
         preco_venda = st.session_state.orcamento['preco_venda']
+        valor_formatado = f"{preco_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         filamentos_html = "<br>".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']])
         st.markdown(f"""
     <div style='background: #23243a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 0 16px #7c3aed44;'>
@@ -154,7 +155,7 @@ def pagina_calculadora_cliente():
             <tr><td><b>Peça:</b></td><td>{st.session_state.orcamento['nome_peca'] or '-'}</td></tr>
             <tr><td><b>Tempo de Impressão:</b></td><td>{st.session_state.orcamento['tempo_impressao']} horas</td></tr>
             <tr><td><b>Filamentos:</b></td><td>{filamentos_html}</td></tr>
-            <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {preco_venda:.2f}</b></td></tr>
+            <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {valor_formatado}</b></td></tr>
         </table>
     </div>
     """, unsafe_allow_html=True)
@@ -174,13 +175,14 @@ def pagina_calculadora_cliente():
         with st.spinner("Enviando orçamento..."):
             if IS_PUBLIC:
                 # Salva no Google Sheets
+                valor_formatado = f"{st.session_state.orcamento['preco_venda']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 dados = [
                     st.session_state.orcamento['nome_cliente'],
                     st.session_state.orcamento['telefone_cliente'],
                     st.session_state.orcamento['nome_peca'],
                     st.session_state.orcamento['tempo_impressao'],
                     "; ".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']]),
-                    f"R$ {st.session_state.orcamento['preco_venda']:.2f}",
+                    f"R$ {valor_formatado}",
                     str(datetime.date.today()),
                     next((a for a in st.session_state.orcamento['anexos'] if a.startswith('STL:')), ''),
                     "; ".join([a for a in st.session_state.orcamento['anexos'] if a.startswith('Imagem:')]),
@@ -227,7 +229,7 @@ def pagina_calculadora_cliente():
                 mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\n"""
                 for fil in st.session_state.orcamento['filamentos_utilizados']:
                     mensagem += f"Filamento: {fil['descricao']} - {fil['quantidade_g_utilizada']}g\n"
-                mensagem += f"Valor estimado: R$ {st.session_state.orcamento['preco_venda']:.2f}"
+                mensagem += f"Valor estimado: R$ {valor_formatado}"
                 if st.session_state.orcamento['anexos']:
                     mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
                 mensagem += "\n\nAguardo retorno!"
