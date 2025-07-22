@@ -68,25 +68,7 @@ def pagina_calculadora_cliente():
         </div>
     ''', unsafe_allow_html=True)
 
-    # Campo para colar link de modelo do MakerWorld
-    modelo_url = st.text_input("Cole o link de um modelo 3D do MakerWorld (opcional):")
-    if modelo_url:
-        st.write(f"Link do modelo adicionado ao orçamento: {modelo_url}")
-        # Tenta extrair uma imagem de preview do modelo
-        import re
-        import requests
-        from bs4 import BeautifulSoup
-        try:
-            if modelo_url.startswith("http") and "makerworld.com" in modelo_url:
-                resp = requests.get(modelo_url, timeout=5)
-                if resp.ok:
-                    soup = BeautifulSoup(resp.text, 'html.parser')
-                    # MakerWorld usa meta property="og:image"
-                    og_image = soup.find('meta', property='og:image')
-                    if og_image and og_image.get('content'):
-                        st.image(og_image['content'], caption="Prévia do modelo MakerWorld", use_column_width=True)
-        except Exception as e:
-            st.info("Não foi possível carregar a prévia da imagem do modelo.")
+    # (Removido campo de input e prévia de imagem do modelo MakerWorld)
 
     if 'orcamento' not in st.session_state:
         st.session_state.orcamento = None
@@ -126,52 +108,52 @@ def pagina_calculadora_cliente():
             st.session_state.filamentos_lista = []
 
     st.markdown("**Anexos (opcional):**")
-    arquivo_stl = st.file_uploader("Arquivo STL", type=["stl"])
-    imagens = st.file_uploader("Imagens (JPG, PNG)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-    link_extra = st.text_input("Link extra (ex: Google Drive, WeTransfer, etc)")
+    st.markdown("""
+    **Como anexar arquivos ao seu orçamento:**
+    - Suba seu arquivo STL e imagens em um serviço como [Google Drive](https://drive.google.com), [Dropbox](https://dropbox.com) ou [WeTransfer](https://wetransfer.com).
+    - Gere um link compartilhável e cole no campo abaixo.
+    """)
+    link_extra = st.text_input(
+        "Link para arquivos (Google Drive, Dropbox, etc)",
+        placeholder="Cole aqui o link compartilhável dos seus arquivos"
+    )
 
+    # Botão Calcular Orçamento
     calcular = st.button("Calcular orçamento")
 
-    if calcular and nome_cliente and telefone_cliente and st.session_state.filamentos_lista:
-        custo_hora = 10.0
-        margem = 1.5
-        preco_custo_filamentos = sum([fil['preco_kg'] * (fil['quantidade_g_utilizada']/1000) for fil in st.session_state.filamentos_lista])
-        preco_custo = custo_hora * tempo_impressao + preco_custo_filamentos
-        preco_venda = preco_custo * margem
-        # Salvar arquivos enviados
-        anexos_info = []
-        pasta_anexos = "anexos_orcamento"
-        os.makedirs(pasta_anexos, exist_ok=True)
-        if arquivo_stl:
-            stl_path = os.path.join(pasta_anexos, f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{arquivo_stl.name}")
-            with open(stl_path, "wb") as f:
-                f.write(arquivo_stl.getbuffer())
-            anexos_info.append(f"STL: {stl_path}")
-        if imagens:
-            for img in imagens:
-                img_path = os.path.join(pasta_anexos, f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{img.name}")
-                with open(img_path, "wb") as f:
-                    f.write(img.getbuffer())
-                anexos_info.append(f"Imagem: {img_path}")
-        if link_extra:
+    if calcular:
+        if not nome_cliente or not telefone_cliente:
+            st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
+        elif not st.session_state.filamentos_lista:
+            st.warning("Adicione pelo menos um filamento para calcular o orçamento.")
+        elif not link_extra:
+            st.warning("Por favor, cole o link dos arquivos STL/imagens para análise do orçamento.")
+        else:
+            custo_hora = 10.0
+            margem = 1.5
+            preco_custo_filamentos = sum([fil['preco_kg'] * (fil['quantidade_g_utilizada']/1000) for fil in st.session_state.filamentos_lista])
+            preco_custo = custo_hora * tempo_impressao + preco_custo_filamentos
+            preco_venda = preco_custo * margem
+
+            anexos_info = []
+            pasta_anexos = "anexos_orcamento"
+            _os.makedirs(pasta_anexos, exist_ok=True)
+            # Não salva mais arquivos locais, só usa o link
             anexos_info.append(f"Link: {link_extra}")
-        st.session_state.orcamento = {
-            'nome_cliente': nome_cliente,
-            'telefone_cliente': telefone_cliente,
-            'nome_peca': nome_peca,
-            'tempo_impressao': tempo_impressao,
-            'filamentos_utilizados': st.session_state.filamentos_lista.copy(),
-            'preco_venda': preco_venda,
-            'custo_hora': custo_hora,
-            'margem': margem,
-            'anexos': anexos_info
-        }
-        st.session_state.orcamento_registrado = False
-        st.session_state.whatsapp_link = None
-    elif calcular and (not nome_cliente or not telefone_cliente):
-        st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
-    elif calcular and not st.session_state.filamentos_lista:
-        st.warning("Adicione pelo menos um filamento para calcular o orçamento.")
+
+            st.session_state.orcamento = {
+                'nome_cliente': nome_cliente,
+                'telefone_cliente': telefone_cliente,
+                'nome_peca': nome_peca,
+                'tempo_impressao': tempo_impressao,
+                'filamentos_utilizados': st.session_state.filamentos_lista.copy(),
+                'preco_venda': preco_venda,
+                'custo_hora': custo_hora,
+                'margem': margem,
+                'anexos': anexos_info
+            }
+            st.session_state.whatsapp_link_gerado = None
+            st.session_state.orcamento_registrado = False
 
     if st.session_state.orcamento:
         preco_venda = st.session_state.orcamento['preco_venda']
@@ -219,8 +201,8 @@ def pagina_calculadora_cliente():
                                 "; ".join([f"{fil['descricao']} - {fil['quantidade_g_utilizada']}g" for fil in st.session_state.orcamento['filamentos_utilizados']]),
                                 f"R$ {valor_formatado}",
                                 str(datetime.date.today()),
-                                next((a for a in st.session_state.orcamento['anexos'] if a.startswith('STL:')), ''),
-                                "; ".join([a for a in st.session_state.orcamento['anexos'] if a.startswith('Imagem:')]),
+                                next((a for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), ''),
+                                "", # Não há anexos de imagem/STL para links
                                 next((a.replace('Link: ', '') for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), '')
                             ]
                             try:
@@ -280,7 +262,8 @@ def pagina_calculadora_cliente():
             st.session_state.orcamento.get('telefone_cliente') != telefone_cliente or
             st.session_state.orcamento.get('nome_peca') != nome_peca or
             st.session_state.orcamento.get('tempo_impressao') != tempo_impressao or
-            st.session_state.orcamento.get('filamentos_utilizados') != st.session_state.filamentos_lista
+            st.session_state.orcamento.get('filamentos_utilizados') != st.session_state.filamentos_lista or
+            st.session_state.orcamento.get('anexos') != [f"Link: {link_extra}"] # Adicionado para verificar o link
         )
     ):
         st.session_state.orcamento = None
