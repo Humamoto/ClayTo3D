@@ -172,22 +172,10 @@ def pagina_calculadora_cliente():
     with st.expander("💡 Como obter Tempo de Impressão e Peso no MakerWorld?"):
         st.markdown("""
         Para ter uma estimativa precisa, você precisa informar o **Tempo de Impressão** e o **Peso Total** da peça.
-        Essas informações estão disponíveis na página de cada modelo no site [MakerWorld](https://makerworld.com/pt), dentro da seção de **"Imprimir perfil"** ou no **pop-up de detalhes** que aparece ao clicar em um perfil de impressão.
+        Essas informações estão disponíveis na página de cada modelo no site [MakerWorld](https://makerworld.com/pt), conforme imagem abaixo.
         """)
         st.image("https://github.com/Humamoto/ClayTo3D/blob/main/TUTO2.png?raw=true", caption="Clique no perfil de impressão para ver os detalhes")
-        st.markdown("""
-        **No MakerWorld, procure por:**
-
-        1. **Tempo de Impressão:**
-           - Representado por um ícone de relógio (⏰) seguido de horas (h) e minutos (m), ex: `18.2 h`.
-           - Se estiver em horas e minutos (ex: "3h 45m"), converta para horas decimais (ex: 3.75 horas).
-
-        2. **Peso Total:**
-           - Representado por um ícone de filamento ( coiled filament icon ) seguido de um valor em gramas (g), ex: `142 g`.
-           - Pode aparecer também como "Filament usage" ou "Weight".
-
-        **Dica:** Se você for baixar o modelo e fatiar em um software como o Bambu Studio ou PrusaSlicer, o próprio software informará esses dados com precisão após o fatiamento.
-        """)
+        
 
     # Nome da peça, tempo de impressão, peso total e link lado a lado
     col3, col4, col5, col6 = st.columns([1, 0.7, 0.7, 2])
