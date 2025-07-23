@@ -27,13 +27,10 @@ def enviar_pedido_google_sheets(dados):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds_dict = dict(st.secrets["gcp_service_account"])
 
-    try:
-            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-            client = gspread.authorize(creds)
-            sheet = client.open(nome_planilha).sheet1
-            sheet.append_row(dados)
-    except Exception as e:
-        st.error(f"Erro ao salvar no Google Sheets: {e}")
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open(nome_planilha).sheet1
+    sheet.append_row(dados)
 
 
 # Detecta ambiente público automaticamente
@@ -205,7 +202,7 @@ def pagina_calculadora_cliente():
         elif not tempo_impressao or not peso_total:
             st.warning("Por favor, preencha o Tempo de Impressão e o Peso total da peça.")
         else:
-            custo_hora = 10.0
+            custo_hora = 5.0
             margem = 1.5
             preco_kg = 100.0  # Preço fixo do filamento
             preco_custo_filamentos = preco_kg * (peso_total / 1000)
@@ -263,7 +260,7 @@ def pagina_calculadora_cliente():
 
         if st.session_state.orcamento:
             if not st.session_state.orcamento_enviado:
-                if st.button("Solicitar orçamento via WhatsApp", key="btn_solicitar_orcamento_whatsapp"):
+                if st.button("Registrar orçamento na fila", key="btn_solicitar_orcamento_whatsapp"):
                     with st.spinner("Registrando orçamento..."):
                         sucesso = False
                         erro = None
@@ -289,7 +286,7 @@ def pagina_calculadora_cliente():
                             try:
                                 enviar_pedido_google_sheets(dados)
                                 st.session_state.orcamento_enviado = True
-                                _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
+                                sucesso = True
                             except Exception as e:
                                 erro = f"Erro ao salvar no Google Sheets: {e}"
                         else:
@@ -315,11 +312,10 @@ def pagina_calculadora_cliente():
                                     sucesso = True
                                 except Exception as e:
                                     erro = f"Erro ao registrar orçamento: {e}"
-                        if sucesso:
-                            st.session_state.orcamento_enviado = True
-                            _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
-                        else:
-                            _ = st.error(erro)
+                    if sucesso:
+                        _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
+                    else:
+                        _ = st.error(erro)
 
             if st.session_state.orcamento_enviado and st.session_state.whatsapp_link:
                 st.markdown(f'''
