@@ -202,6 +202,8 @@ def pagina_calculadora_cliente():
     if calcular:
         if not nome_cliente or not telefone_cliente:
             st.warning("Por favor, preencha seu nome e WhatsApp para prosseguir.")
+        elif not tempo_impressao or not peso_total:
+            st.warning("Por favor, preencha o Tempo de Impressão e o Peso total da peça.")
         else:
             custo_hora = 10.0
             margem = 1.5
