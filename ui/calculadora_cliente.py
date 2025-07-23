@@ -9,7 +9,7 @@ import socket
 import time
 from streamlit_extras.stylable_container import stylable_container
 from googleapiclient.discovery import build
-from googleapapi.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
 import tempfile
 import requests
