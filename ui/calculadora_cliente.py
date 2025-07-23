@@ -174,7 +174,7 @@ def pagina_calculadora_cliente():
         Para ter uma estimativa precisa, você precisa informar o **Tempo de Impressão** e o **Peso Total** da peça.
         Essas informações estão disponíveis na página de cada modelo no site [MakerWorld](https://makerworld.com/pt), dentro da seção de **"Imprimir perfil"** ou no **pop-up de detalhes** que aparece ao clicar em um perfil de impressão.
         """)
-        st.image("https://github.com/Humamoto/ClayTo3D/blob/main/tuto.png?raw=true", caption="Clique no perfil de impressão para ver os detalhes")
+        st.image("https://github.com/Humamoto/ClayTo3D/blob/main/TUTO2.png?raw=true", caption="Clique no perfil de impressão para ver os detalhes")
         st.markdown("""
         **No MakerWorld, procure por:**
 
