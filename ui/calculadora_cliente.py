@@ -287,7 +287,7 @@ def pagina_calculadora_cliente():
                             try:
                                 enviar_pedido_google_sheets(dados)
                                 st.session_state.orcamento_enviado = True
-                                st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
+                                _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
                             except Exception as e:
                                 erro = f"Erro ao salvar no Google Sheets: {e}"
                         else:
@@ -315,9 +315,9 @@ def pagina_calculadora_cliente():
                                     erro = f"Erro ao registrar orçamento: {e}"
                         if sucesso:
                             st.session_state.orcamento_enviado = True
-                            st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
+                            _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
                         else:
-                            st.error(erro)
+                            _ = st.error(erro)
 
             if st.session_state.orcamento_enviado and st.session_state.whatsapp_link:
                 st.markdown(f'''
