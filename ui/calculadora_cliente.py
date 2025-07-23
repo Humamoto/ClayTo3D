@@ -267,20 +267,27 @@ def pagina_calculadora_cliente():
                         erro = None
                         if IS_PUBLIC:
                             dados = [
-                                st.session_state.orcamento['nome_cliente'],
-                                st.session_state.orcamento['telefone_cliente'],
-                                st.session_state.orcamento['nome_peca'],
-                                st.session_state.orcamento['tempo_impressao'],
-                                st.session_state.orcamento['peso_total'],
-                                f"R$ {valor_formatado}",
-                                str(datetime.date.today()),
-                                next((a for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), ''),
-                                "", # Não há anexos de imagem/STL para links
-                                next((a.replace('Link: ', '') for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), '')
+                                str(datetime.date.today()), # Data do Orçamento
+                                "Orçamento Solicitado",      # Status
+                                st.session_state.orcamento['nome_peca'] or '-', # Nome da Peça
+                                st.session_state.orcamento['tempo_impressao'], # Tempo(h)
+                                f"R$ {valor_formatado}",     # Valor Estimado
+                                st.session_state.orcamento['nome_cliente'], # Nome
+                                st.session_state.orcamento['telefone_cliente'], # WhatsApp
+                                st.session_state.orcamento.get('cep', ''), # CEP
+                                st.session_state.orcamento.get('numero', ''), # Numero
+                                st.session_state.orcamento.get('logradouro', ''), # Rua
+                                st.session_state.orcamento.get('bairro', ''), # Bairro
+                                st.session_state.orcamento.get('cidade', ''), # Cidade
+                                st.session_state.orcamento.get('estado', ''), # Estado
+                                st.session_state.orcamento.get('complemento', ''), # Complemento
+                                next((a.replace('Link: ', '') for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), ''), # Link
+                                '' # Observação (campo vazio, pois não é coletado diretamente do cliente neste fluxo)
                             ]
                             try:
                                 enviar_pedido_google_sheets(dados)
-                                sucesso = True
+                                st.session_state.orcamento_enviado = True
+                                st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
                             except Exception as e:
                                 erro = f"Erro ao salvar no Google Sheets: {e}"
                         else:
