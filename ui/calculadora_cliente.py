@@ -168,19 +168,23 @@ def pagina_calculadora_cliente():
 
     complemento = st.text_input("Complemento (opcional)")
 
-    # Tutorial para obter tempo de impressão e peso no MakerWorld
+    # Tutorial para obter tempo de impressão e peso no MakerWorld (com imagem)
     with st.expander("💡 Como obter Tempo de Impressão e Peso no MakerWorld?"):
         st.markdown("""
         Para ter uma estimativa precisa, você precisa informar o **Tempo de Impressão** e o **Peso Total** da peça.
-        Você pode encontrar essas informações na página de cada modelo no site [MakerWorld](https://makerworld.com/pt):
+        Essas informações estão disponíveis na página de cada modelo no site [MakerWorld](https://makerworld.com/pt), dentro da seção de **"Imprimir perfil"** ou no **pop-up de detalhes** que aparece ao clicar em um perfil de impressão.
+        """)
+        st.image("https://photos.google.com/u/1/photo/AF1QipOGKMjwh-a0G-3Twz7BBSFYNbVAy_1L4n9Y8bN0", caption="Clique no perfil de impressão para ver os detalhes") # Substituir por link real
+        st.markdown("""
+        **No MakerWorld, procure por:**
 
         1. **Tempo de Impressão:**
-           - Na página do modelo, procure por informações sobre a impressão (geralmente abaixo da descrição ou em uma aba "Print Settings" / "Configurações de Impressão").
-           - O tempo é normalmente dado em horas e minutos (ex: "3h 45m"). Converta para horas decimais (ex: 3.75 horas).
+           - Representado por um ícone de relógio (⏰) seguido de horas (h) e minutos (m), ex: `18.2 h`.
+           - Se estiver em horas e minutos (ex: "3h 45m"), converta para horas decimais (ex: 3.75 horas).
 
         2. **Peso Total:**
-           - O peso do filamento necessário para a impressão também é geralmente informado nas "Print Settings" ou em detalhes do modelo.
-           - Ele pode aparecer como "Filament usage" ou "Weight" e é dado em gramas (g).
+           - Representado por um ícone de filamento ( coiled filament icon ) seguido de um valor em gramas (g), ex: `142 g`.
+           - Pode aparecer também como "Filament usage" ou "Weight".
 
         **Dica:** Se você for baixar o modelo e fatiar em um software como o Bambu Studio ou PrusaSlicer, o próprio software informará esses dados com precisão após o fatiamento.
         """)
