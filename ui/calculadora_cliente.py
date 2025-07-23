@@ -9,7 +9,7 @@ import socket
 import time
 from streamlit_extras.stylable_container import stylable_container
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from googleapapi.http import MediaFileUpload
 from google.oauth2 import service_account
 import tempfile
 import requests
@@ -187,6 +187,10 @@ def pagina_calculadora_cliente():
             "Link do arquivo de impressão",
             placeholder="https://makerworld.com"
         )
+    
+    # Novo campo para observação
+    observacao_cor = st.text_input("Cor desejada (se a peça for de uma cor só)", placeholder="Ex: Preto, Branco, Vermelho translúcido")
+
 
     # Garante que anexos_info sempre existe
     anexos_info = []
@@ -225,7 +229,8 @@ def pagina_calculadora_cliente():
                 'complemento': complemento,
                 'bairro': bairro,
                 'cidade': cidade,
-                'estado': estado
+                'estado': estado,
+                'observacao_cor': observacao_cor # Adiciona a observação
             }
             st.session_state.whatsapp_link_gerado = None
             st.session_state.orcamento_registrado = False
@@ -242,7 +247,7 @@ def pagina_calculadora_cliente():
             <tr><td><b>Peça:</b></td><td>{st.session_state.orcamento.get('nome_peca', '-')}</td></tr>
             <tr><td><b>Tempo de Impressão:</b></td><td>{st.session_state.orcamento.get('tempo_impressao', '-')} horas</td></tr>
             <tr><td><b>Peso Total:</b></td><td>{st.session_state.orcamento.get('peso_total', '-')}g</td></tr>
-            <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {valor_formatado}</b></td></tr>
+            <tr><td><b>Cor Desejada:</b></td><td>{st.session_state.orcamento.get('observacao_cor', '-') or '-'}</td></tr> <tr><td><b>Valor estimado:</b></td><td style='font-size:1.3rem; color:#ff4ecd;'><b>R$ {valor_formatado}</b></td></tr>
         </table>
     </div>
     """, unsafe_allow_html=True)
@@ -251,6 +256,8 @@ def pagina_calculadora_cliente():
         # Gere o link do WhatsApp sempre que houver orçamento
         numero_whatsapp = "5541997730248"
         mensagem = f"""Olá! Gostaria de solicitar um orçamento para impressão 3D:\n\nNome: {st.session_state.orcamento['nome_cliente']}\nWhatsApp: {st.session_state.orcamento['telefone_cliente']}\nPeça: {st.session_state.orcamento['nome_peca'] or '-'}\nTempo de impressão: {st.session_state.orcamento['tempo_impressao']} horas\nPeso total: {st.session_state.orcamento['peso_total']}g\n"""
+        if st.session_state.orcamento.get('observacao_cor'): # Adiciona a observação na mensagem do WhatsApp
+            mensagem += f"Cor Desejada: {st.session_state.orcamento['observacao_cor']}\n"
         mensagem += f"Valor estimado: R$ {valor_formatado}"
         if st.session_state.orcamento['anexos']:
             mensagem += "\nAnexos: " + "; ".join(st.session_state.orcamento['anexos'])
@@ -281,7 +288,7 @@ def pagina_calculadora_cliente():
                                 st.session_state.orcamento.get('estado', ''), # Estado
                                 st.session_state.orcamento.get('complemento', ''), # Complemento
                                 next((a.replace('Link: ', '') for a in st.session_state.orcamento['anexos'] if a.startswith('Link:')), ''), # Link
-                                '' # Observação (campo vazio, pois não é coletado diretamente do cliente neste fluxo)
+                                st.session_state.orcamento.get('observacao_cor', '') # Observação (novo campo)
                             ]
                             try:
                                 enviar_pedido_google_sheets(dados)
@@ -293,9 +300,11 @@ def pagina_calculadora_cliente():
                             if not st.session_state.orcamento_registrado:
                                 id_cliente = None
                                 try:
-                                    observacao = f"Nome: {st.session_state.orcamento['nome_cliente']} | WhatsApp: {st.session_state.orcamento['telefone_cliente']}"
+                                    observacao_db = f"Nome: {st.session_state.orcamento['nome_cliente']} | WhatsApp: {st.session_state.orcamento['telefone_cliente']}"
                                     if st.session_state.orcamento['anexos']:
-                                        observacao += " | Anexos: " + "; ".join(st.session_state.orcamento['anexos'])
+                                        observacao_db += " | Anexos: " + "; ".join(st.session_state.orcamento['anexos'])
+                                    if st.session_state.orcamento.get('observacao_cor'): # Adiciona a observação para o banco de dados
+                                        observacao_db += f" | Cor Desejada: {st.session_state.orcamento['observacao_cor']}"
                                     adicionar_pedido_venda(
                                         id_cliente=id_cliente,
                                         nome_peca=st.session_state.orcamento['nome_peca'] or '-',
@@ -306,16 +315,16 @@ def pagina_calculadora_cliente():
                                         margem_lucro_percentual=st.session_state.orcamento['margem'],
                                         data_venda=str(datetime.date.today()),
                                         status="Orçamento Solicitado",
-                                        observacao=observacao
+                                        observacao=observacao_db # Usa a observação atualizada para o banco de dados
                                     )
                                     st.session_state.orcamento_registrado = True
                                     sucesso = True
                                 except Exception as e:
                                     erro = f"Erro ao registrar orçamento: {e}"
-                    if sucesso:
-                        _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
-                    else:
-                        _ = st.error(erro)
+                        if sucesso:
+                            _ = st.success("Orçamento enviado com sucesso! Agora clique abaixo para enviar pelo WhatsApp.")
+                        else:
+                            _ = st.error(erro)
 
             if st.session_state.orcamento_enviado and st.session_state.whatsapp_link:
                 st.markdown(f'''
@@ -358,7 +367,8 @@ def pagina_calculadora_cliente():
             st.session_state.orcamento.get('complemento') != complemento or
             st.session_state.orcamento.get('bairro') != bairro or
             st.session_state.orcamento.get('cidade') != cidade or
-            st.session_state.orcamento.get('estado') != estado
+            st.session_state.orcamento.get('estado') != estado or
+            st.session_state.orcamento.get('observacao_cor') != observacao_cor # Adiciona a observação ao resetar
         )
     ):
         st.session_state.orcamento = None
