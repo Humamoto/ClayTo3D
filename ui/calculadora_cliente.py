@@ -206,7 +206,7 @@ def pagina_calculadora_cliente():
         elif not tempo_impressao or not peso_total:
             st.warning("Por favor, preencha o Tempo de Impressão e o Peso total da peça.")
         else:
-            custo_hora = 5.0
+            custo_hora = 2.0
             margem = 1.5
             preco_kg = 100.0  # Preço fixo do filamento
             preco_custo_filamentos = preco_kg * (peso_total / 1000)
